@@ -1,4 +1,6 @@
 #include <stdio.h>
+ key2){
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -37,9 +39,44 @@ int is_equal(void* key1, void* key2){
     if(strcmp((char*)key1,(char*)key2) == 0) return 1;
     return 0;
 }
+/* 2.- Implemente la función void insertMap(HashMap * map, char * key, void * value). Esta función inserta un nuevo dato (key,value) en el mapa y actualiza el índice current a esa posición. Recuerde que para insertar un par (clave,valor) debe:
 
+a - Aplicar la función hash a la clave para obtener la posición donde debería insertar el nuevo par
+
+b - Si la casilla se encuentra ocupada, avance hasta una casilla disponible (método de resolución de colisiones). Una casilla disponible es una casilla nula, pero también una que tenga un par inválido (key==NULL).
+
+c - Ingrese el par en la casilla que encontró.
+
+No inserte claves repetidas. Recuerde que el arreglo es circular. Recuerde actualizar la variable size.
+*/
 
 void insertMap(HashMap * map, char * key, void * value) {
+  
+  if(map==NULL) return;
+  
+  int pos = hash(key,map->capacity);
+
+  //el bucket está vacío o invalidado
+  if (map->buckets[pos] == NULL || map->buckets[pos]->key == NULL) {
+    Pair* newElem = malloc(sizeof(Pair));
+    newElem->value = value;
+    newElem->key = key;
+    map->buckets[pos] = newElem;
+    map->size++;
+  }
+  //resolver colision
+  if (map->buckets[pos]->key != NULL) {
+    for (int i = 0; i < map->capacity; i++) {
+      if (map->buckets[pos] == NULL || map->buckets[pos]->key == NULL) {
+        Pair* newElem = malloc(sizeof(Pair));
+        newElem->value = value;
+        newElem->key = key;
+        map->buckets[pos] = newElem;
+        map->size++;
+      }
+    }
+  }
+    
 
 
 }
@@ -51,9 +88,26 @@ void enlarge(HashMap * map) {
 }
 
 
-HashMap * createMap(long capacity) {
+HashMap *createMap(long capacity) {
+    // Reserva memoria para cada dato de esta struct
+    HashMap *map = (HashMap *)malloc(sizeof(HashMap));
+    if (map == NULL) return NULL;
+  
 
-    return NULL;
+    map->capacity = capacity;
+    map->current = -1;
+
+    // Reservar memoria para los buckets
+    // se hace con calloc para que se inicien en NULL
+    map->buckets = (Pair **)calloc(capacity, sizeof(Pair *));
+    if (map->buckets == NULL) {
+        free(map); // se libera la memoria de al estructura
+        return NULL;
+    }
+
+    map->size = 0;
+
+    return map;
 }
 
 void eraseMap(HashMap * map,  char * key) {    
