@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -52,7 +51,9 @@ No inserte claves repetidas. Recuerde que el arreglo es circular. Recuerde actua
 void insertMap(HashMap * map, char * key, void * value) {
   
   if(map==NULL) return;
-  
+    
+  //
+    
   int pos = hash(key,map->capacity);
 
   //el bucket está vacío o invalidado
