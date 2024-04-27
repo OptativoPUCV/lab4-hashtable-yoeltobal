@@ -37,96 +37,143 @@ int is_equal(void* key1, void* key2){
     if(strcmp((char*)key1,(char*)key2) == 0) return 1;
     return 0;
 }
-/* 2.- Implemente la función void insertMap(HashMap * map, char * key, void * value). Esta función inserta un nuevo dato (key,value) en el mapa y actualiza el índice current a esa posición. Recuerde que para insertar un par (clave,valor) debe:
 
-a - Aplicar la función hash a la clave para obtener la posición donde debería insertar el nuevo par
 
-b - Si la casilla se encuentra ocupada, avance hasta una casilla disponible (método de resolución de colisiones). Una casilla disponible es una casilla nula, pero también una que tenga un par inválido (key==NULL).
+void insertMap(HashMap *map, char *key, void *value) {
+  if (map == NULL || key == NULL) return;
 
-c - Ingrese el par en la casilla que encontró.
+  int pos = hash(key, map->capacity);
+  int originalPos = pos;
 
-No inserte claves repetidas. Recuerde que el arreglo es circular. Recuerde actualizar la variable size.
-*/
+  while (map->buckets[pos] != NULL && map->buckets[pos]->key != NULL) {
+    //si la clave ya existe, no se inserta el elemento
+    if (strcmp(map->buckets[pos]->key, key) == 0)return;
 
-void insertMap(HashMap * map, char * key, void * value) {
-  
-  if(map==NULL) return;
-    
-  //
-    
-  int pos = hash(key,map->capacity);
-
-  //el bucket está vacío o invalidado
-  if (map->buckets[pos] == NULL || map->buckets[pos]->key == NULL) {
-    Pair* newElem = malloc(sizeof(Pair));
-    newElem->value = value;
-    newElem->key = key;
-    map->buckets[pos] = newElem;
-    map->size++;
+    pos = (pos + 1) % map->capacity; //mverse a la siguiente posición (circularmente)
+    if (pos == originalPos) return;
   }
-  //resolver colision
-  if (map->buckets[pos]->key != NULL) {
-    for (int i = 0; i < map->capacity; i++) {
-      if (map->buckets[pos] == NULL || map->buckets[pos]->key == NULL) {
-        Pair* newElem = malloc(sizeof(Pair));
-        newElem->value = value;
-        newElem->key = key;
-        map->buckets[pos] = newElem;
-        map->size++;
-      }
-    }
-  }
-    
 
 
+  //insertar el nuevo elemento en la posición encontrada
+  Pair *newElem = malloc(sizeof(Pair));
+  newElem->value = value;
+  newElem->key = key;
+  map->buckets[pos] = newElem;
+  map->size++;
 }
 
 void enlarge(HashMap * map) {
-    enlarge_called = 1; //no borrar (testing purposes)
+  enlarge_called = 1; //no borrar (testing purposes)
 
+  //copia arreglo antiguo
+  Pair **old_buckets = map->buckets;
+  int old_capacity = map->size;
 
+  //agrandar al doble
+  map->capacity *= 2;
+
+  map->buckets = (Pair **)calloc(map->capacity, sizeof(Pair *));
+
+  map->size = 0;
+  
+  for (int i = 0; i < old_capacity; i++) {
+    if (old_buckets[i] != NULL)
+      insertMap(map,old_buckets[i]->key,old_buckets[i]->value);
+  }
+
+  free(old_buckets);
+  
+  return;
 }
-
 
 HashMap *createMap(long capacity) {
-    // Reserva memoria para cada dato de esta struct
-    HashMap *map = (HashMap *)malloc(sizeof(HashMap));
-    if (map == NULL) return NULL;
+  // Reserva memoria para cada dato de esta struct
+  HashMap *map = (HashMap *)malloc(sizeof(HashMap));
+  if (map == NULL) return NULL;
   
+  map->capacity = capacity;
+  map->current = -1;
 
-    map->capacity = capacity;
-    map->current = -1;
-
-    // Reservar memoria para los buckets
-    // se hace con calloc para que se inicien en NULL
-    map->buckets = (Pair **)calloc(capacity, sizeof(Pair *));
-    if (map->buckets == NULL) {
-        free(map); // se libera la memoria de al estructura
-        return NULL;
-    }
-
-    map->size = 0;
-
-    return map;
-}
-
-void eraseMap(HashMap * map,  char * key) {    
-
-
-}
-
-Pair * searchMap(HashMap * map,  char * key) {   
-
-
+  //reservar memoria para los buckets
+  //se hace con calloc para que se inicien en NULL
+  map->buckets = (Pair **)calloc(capacity, sizeof(Pair *));
+  if (map->buckets == NULL) {
+    free(map);
     return NULL;
+  }
+
+  map->size = 0;
+
+  return map;
+}
+
+void eraseMap(HashMap * map,  char * key) {
+  
+  if (map == NULL || key == NULL) return;
+
+  int pos = hash(key, map->capacity);
+  int originalPos = pos;
+
+  while (map->buckets[pos] != NULL) {
+    if (strcmp(map->buckets[pos]->key, key) == 0){
+      map->buckets[pos]->key = NULL;
+      map->size--;
+    }
+    pos = (pos + 1) % map->capacity;
+
+    if (pos == originalPos) return;
+  }
+
+  return;
+}
+
+Pair * searchMap(HashMap * map,  char * key) { 
+  
+  if (map == NULL || key == NULL) return NULL;
+  
+  //posicion en la que debe estar el 
+  int pos = hash(key, map->capacity);
+  int originalPos = pos;
+
+  
+  while (map->buckets[pos] != NULL) {
+    if (strcmp(map->buckets[pos]->key, key) == 0){
+      map->current = pos;
+      return map->buckets[pos];
+    }
+    pos = (pos + 1) % map->capacity;
+    
+    if (pos == originalPos) return NULL;
+  }
+
+  return NULL;
 }
 
 Pair * firstMap(HashMap * map) {
-
-    return NULL;
+  
+  if (map == NULL) return NULL;
+  
+  for(int i = 0; i < map->capacity; i++) {
+    if (map->buckets[i] != NULL && map->buckets[i]->key != NULL) {
+      map->current = i;
+      return map->buckets[i];
+    }
+  }
+  
+  return NULL;
 }
 
 Pair * nextMap(HashMap * map) {
 
-    return NULL;
+  if (map == NULL) return NULL;
+
+  for (int i = (map->current + 1); i < map->capacity; i++) {
+    if (map->buckets[i] != NULL && map->buckets[i]->key != NULL) {
+      map->current = i;
+      return map->buckets[i];
+    }
+  }
+
+    
+  return NULL;
 }
