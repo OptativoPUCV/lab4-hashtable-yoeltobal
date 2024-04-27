@@ -67,7 +67,7 @@ void enlarge(HashMap * map) {
 
   //copia arreglo antiguo
   Pair **old_buckets = map->buckets;
-  int old_capacity = map->size;
+  int old_size = map->size;
 
   //agrandar al doble
   map->capacity *= 2;
@@ -76,7 +76,7 @@ void enlarge(HashMap * map) {
 
   map->size = 0;
   
-  for (int i = 0; i < old_capacity; i++) {
+  for (int i = 0; i < old_size; i++) {
     if (old_buckets[i] != NULL)
       insertMap(map,old_buckets[i]->key,old_buckets[i]->value);
   }
